@@ -1,0 +1,5 @@
+  MockUSDC deployed at: 0xde286242848736124e95fAdCAbFca3eA469F5B6F
+  PriceOracle deployed at: 0xF3AacC042b0615B6410967A17E8D624a37A05409
+  InterestRateModel deployed at: 0xe951b4076fC8Cdab0b249D55cbC6ee14ABdeC445
+  CollateralManager deployed at: 0x828b21cB8b1A934A9BE32758ad9C48749B626610
+  LendingPool deployed at: 0x0073263715A90f0ea00787486AF23171CF62e9a2
