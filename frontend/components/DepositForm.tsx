@@ -41,7 +41,7 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
         address: CONTRACT_ADDRESSES.LendingPool,
         abi: LENDING_POOL_ABI,
         functionName: 'deposit',
-        args: [asset as `0x${string}`, BigInt(Number(amount) * 10 ** 18), address, useAsCollateral],
+        args: [asset as `0x${string}`, BigInt(Math.floor(parseFloat(amount) * 10 ** 6)), address as `0x${string}`, useAsCollateral],
       });
     }
   }, [isApproveSuccess, step]);
@@ -103,7 +103,7 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
       address: asset as `0x${string}`,
       abi: ERC20_ABI,
       functionName: 'approve',
-      args: [CONTRACT_ADDRESSES.LendingPool, BigInt(Number(amount) * 10 ** 18)],
+      args: [CONTRACT_ADDRESSES.LendingPool, BigInt(Math.floor(parseFloat(amount) * 10 ** 6))],
     });
   };
 

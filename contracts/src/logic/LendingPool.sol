@@ -59,10 +59,12 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     }
 
     mapping(address => address) public aTokens;
+    mapping(address => uint8) public assetDecimals;
 
-    function addAsset(address asset, string memory aTokenName, string memory aTokenSymbol) external onlyOwner {
+    function addAsset(address asset, string memory aTokenName, string memory aTokenSymbol, uint8 decimals) external onlyOwner {
         AToken aToken = new AToken(aTokenName, aTokenSymbol, address(this));
         aTokens[asset] = address(aToken);
+        assetDecimals[asset] = decimals;
     }
     function deposit(address asset, uint256 amount, address onBehalfOf, bool useAsCollateral) external override nonReentrant {
         require(amount > 0, "Amount must be greater than 0");
@@ -103,7 +105,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
 
         // 2. Get price of asset to be borrowed
         uint256 borrowAssetPrice = priceOracle.getPrice(asset);
-        uint256 borrowValue = (amount * borrowAssetPrice) / 1e18;
+        uint256 decimals = assetDecimals[asset];
+        uint256 borrowValue = (amount * borrowAssetPrice) / (10 ** decimals);
 
         // 3. Calculate max borrowable amount
         uint256 maxBorrowableAmountInValue = (collateralValue * ltv) / 100; // Assuming LTV is in percentage
@@ -129,7 +132,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     function repay(address asset, uint256 amount, address onBehalfOf) external override returns (uint256) {
         // 1. Get price of asset being repaid
         uint256 repayAssetPrice = priceOracle.getPrice(asset);
-        uint256 repayValue = (amount * repayAssetPrice) / 1e18;
+        uint256 decimals = assetDecimals[asset];
+        uint256 repayValue = (amount * repayAssetPrice) / (10 ** decimals);
 
         // 2. Transfer asset from user to contract
         IERC20(asset).transferFrom(msg.sender, address(this), amount);
@@ -160,7 +164,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         // 3. Repay debt
         // This is a simplified implementation. A real implementation would need to handle interest.
         IERC20(debtAsset).transferFrom(msg.sender, address(this), debtToCover);
-        uint256 debtValue = (debtToCover * priceOracle.getPrice(debtAsset)) / 1e18;
+        uint256 decimals = assetDecimals[debtAsset];
+        uint256 debtValue = (debtToCover * priceOracle.getPrice(debtAsset)) / (10 ** decimals);
         userTotalBorrowedValue[user] -= debtValue;
         totalBorrows[debtAsset] -= debtToCover;
         userBorrows[user][debtAsset] -= debtToCover;

@@ -24,8 +24,13 @@ contract CollateralManager is Ownable {
         priceOracle = PriceOracle(_priceOracle);
     }
 
+    function setAssetDecimals(address asset, uint8 decimals) external onlyOwner {
+        assetDecimals[asset] = decimals;
+    }
+
     mapping(address => mapping(address => uint256)) public userCollateral;
     mapping(address => address[]) public userCollateralAssets;
+    mapping(address => uint8) public assetDecimals;
 
     function depositCollateral(address user, address asset, uint256 amount) external onlyLendingPool {
         if (userCollateral[user][asset] == 0) {
@@ -46,7 +51,8 @@ contract CollateralManager is Ownable {
             address collateralAsset = userCollateralAssets[user][i];
             uint256 amount = userCollateral[user][collateralAsset];
             uint256 price = priceOracle.getPrice(collateralAsset);
-            totalCollateralValue += (amount * price) / 1e18; // Assuming prices are in ETH with 18 decimals
+            uint256 decimals = assetDecimals[collateralAsset];
+            totalCollateralValue += (amount * price) / (10 ** decimals);
         }
         return totalCollateralValue;
     }

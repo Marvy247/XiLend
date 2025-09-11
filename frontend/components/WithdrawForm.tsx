@@ -68,7 +68,7 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
       address: CONTRACT_ADDRESSES.LendingPool,
       abi: LENDING_POOL_ABI,
       functionName: 'withdraw',
-      args: [asset as `0x${string}`, BigInt(Number(amount) * 10 ** 18), address],
+      args: [asset as `0x${string}`, BigInt(Math.floor(parseFloat(amount) * 10 ** 6)), address as `0x${string}`],
     });
   };
 

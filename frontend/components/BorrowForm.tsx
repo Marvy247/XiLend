@@ -95,10 +95,10 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
 
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * 10 ** 6));
     writeContract({
-      address: CONTRACT_ADDRESSES.LendingPool,
+      address: CONTRACT_ADDRESSES.LendingPool as `0x${string}`,
       abi: LENDING_POOL_ABI,
       functionName: 'borrow',
-      args: [asset as `0x${string}`, amountInWei, BigInt(interestRateMode), address],
+      args: [asset as `0x${string}`, amountInWei, BigInt(interestRateMode), address as `0x${string}`],
     });
   };
 

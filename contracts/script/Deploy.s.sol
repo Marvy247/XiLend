@@ -38,10 +38,13 @@ contract Deploy is Script {
         collateralManager.setLendingPool(address(lendingPool));
 
         // Add USDC as asset
-        lendingPool.addAsset(address(usdc), "aUSDC", "aUSDC");
+        lendingPool.addAsset(address(usdc), "aUSDC", "aUSDC", 6);
 
         // Set price for USDC (1 USD = 1e18 wei)
         priceOracle.setPrice(address(usdc), 1e18);
+
+        // Set decimals in CollateralManager
+        collateralManager.setAssetDecimals(address(usdc), 6);
 
         // Set LTV to 75%
         lendingPool.setLTV(75);

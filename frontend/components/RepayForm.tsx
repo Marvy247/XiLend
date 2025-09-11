@@ -43,7 +43,7 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
         address: CONTRACT_ADDRESSES.LendingPool,
         abi: LENDING_POOL_ABI,
         functionName: 'repay',
-        args: [asset as `0x${string}`, BigInt(amount) * BigInt(10 ** 6), address],
+        args: [asset as `0x${string}`, BigInt(Math.floor(parseFloat(amount) * 10 ** 6)), address as `0x${string}`],
       });
     }
   }, [isApproveSuccess, step]);
@@ -119,7 +119,7 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
       address: asset as `0x${string}`,
       abi: ERC20_ABI,
       functionName: 'approve',
-      args: [CONTRACT_ADDRESSES.LendingPool, BigInt(amount) * BigInt(10 ** 6)],
+      args: [CONTRACT_ADDRESSES.LendingPool, BigInt(Math.floor(parseFloat(amount) * 10 ** 6))],
     });
   };
 
