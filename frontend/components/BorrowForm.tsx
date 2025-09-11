@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWriteContract, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { useUserAccountData } from '@/hooks/useLendingPool';
+import { useEthUsdPrice } from '@/hooks/useEthUsdPrice';
 import { CONTRACT_ADDRESSES, LENDING_POOL_ABI } from '@/lib/contracts';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, TrendingDown, AlertCircle, CheckCircle, DollarSign, TrendingUp } from 'lucide-react';
+import { formatValue } from '@/lib/utils';
 
 interface BorrowFormProps {
   onSuccess?: () => void;
@@ -21,56 +23,35 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
   const [amount, setAmount] = useState('');
   const [asset, setAsset] = useState<string>(CONTRACT_ADDRESSES.MockUSDC);
   const [interestRateMode, setInterestRateMode] = useState(1); // 1 for stable, 2 for variable
-  const [step, setStep] = useState<'idle' | 'borrowing' | 'success' | 'error'>('idle');
+  const [step, setStep] = useState<'idle' | 'borrowing' | 'waiting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [validationError, setValidationError] = useState('');
 
   const { address } = useAccount();
   const { accountData, refetch, queryKey } = useUserAccountData();
-  const { writeContract, isPending, data: borrowHash, error: borrowError } = useWriteContract();
+  const { writeContract, data: borrowHash, error: borrowError, isPending } = useWriteContract();
+  const { ethUsdPrice, isLoading: isPriceLoading } = useEthUsdPrice();
+  const queryClient = useQueryClient();
+
   const { isLoading: isBorrowing, isSuccess: isBorrowSuccess } = useWaitForTransactionReceipt({
     hash: borrowHash,
   });
-  const queryClient = useQueryClient();
 
-  // Watch for transaction completion and update step accordingly
   useEffect(() => {
     if (isBorrowSuccess) {
       setStep('success');
-      // Immediately refetch user account data after successful borrow
       refetch();
-      // Invalidate query cache to force update
       queryClient.invalidateQueries({ queryKey });
-      // Additional refetch after a short delay to ensure blockchain state is updated
-      setTimeout(() => {
-        refetch();
-        queryClient.invalidateQueries({ queryKey });
-      }, 1000);
-      // Close dialog after showing success and allowing time for refetch
       setTimeout(() => {
         setIsOpen(false);
-        setAmount('');
-        setStep('idle');
+        resetForm();
         onSuccess?.();
-        // Final refetch to ensure all components are updated
-        refetch();
-        queryClient.invalidateQueries({ queryKey });
       }, 2000);
     } else if (borrowError) {
       setStep('error');
       setErrorMessage(borrowError?.message || 'Borrow transaction failed. Please try again.');
     }
   }, [isBorrowSuccess, borrowError, onSuccess, refetch, queryClient, queryKey]);
-
-  const formatValue = (value: bigint | number, convertToUSDC: boolean = false) => {
-    const numValue = typeof value === 'bigint' ? Number(value) / 1e18 : value;
-    if (convertToUSDC) {
-      // Convert ETH value to USDC equivalent (assuming 1 ETH = 2000 USDC)
-      const usdcValue = numValue * 2000;
-      return usdcValue.toFixed(2);
-    }
-    return numValue.toFixed(4);
-  };
 
   const validateAmount = (value: string) => {
     const num = parseFloat(value);
@@ -90,10 +71,8 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
   };
 
   const handleSetMax = () => {
-    if (accountData) {
-      // Convert from ETH to USDC (assuming 1 ETH = 2000 USDC for simplicity)
-      // In a real app, you'd get the actual price from the PriceOracle
-      const maxAmount = Number(accountData.availableBorrowsETH) / 1e18 * 2000;
+    if (accountData && ethUsdPrice) {
+      const maxAmount = Number(accountData.availableBorrowsETH) / 1e18 * ethUsdPrice;
       setAmount(maxAmount.toFixed(2));
       setValidationError('');
     }
@@ -115,7 +94,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
     setValidationError('');
 
     const amountInWei = BigInt(Math.floor(parseFloat(amount) * 10 ** 6));
-    await writeContract({
+    writeContract({
       address: CONTRACT_ADDRESSES.LendingPool,
       abi: LENDING_POOL_ABI,
       functionName: 'borrow',
@@ -131,6 +110,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
   };
 
   const handleOpenChange = (open: boolean) => {
+    if (isPending || isBorrowing) return;
     setIsOpen(open);
     if (!open) {
       resetForm();
@@ -161,7 +141,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Available to borrow:</span>
             <span className="font-semibold text-gray-900 dark:text-white">
-              {accountData ? formatValue(accountData.availableBorrowsETH, true) : '0.00'} USDC
+              {accountData ? formatValue(accountData.availableBorrowsETH, true, ethUsdPrice) : '0.00'} USDC
             </span>
           </div>
         </div>
@@ -177,7 +157,10 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
                 Borrow Assets
               </DialogTitle>
               <DialogDescription className="text-gray-600 dark:text-gray-400 font-medium mt-1">
-                Borrow assets using your deposited collateral as security.
+                {step === 'waiting' && 'Waiting for transaction confirmation...'}
+                {step === 'success' && 'Transaction successful!'}
+                {step === 'error' && 'Transaction failed.'}
+                {step !== 'waiting' && step !== 'success' && step !== 'error' && 'Borrow assets using your deposited collateral as security.'}
               </DialogDescription>
             </div>
           </div>
@@ -185,7 +168,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Available to Borrow:</span>
               <span className="font-bold text-lg text-red-600 dark:text-red-400">
-                {accountData ? formatValue(accountData.availableBorrowsETH, true) : '0.00'} USDC
+                {accountData ? formatValue(accountData.availableBorrowsETH, true, ethUsdPrice) : '0.00'} USDC
               </span>
             </div>
           </div>
@@ -243,7 +226,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
                     variant="outline"
                     size="sm"
                     onClick={handleSetMax}
-                    disabled={!accountData}
+                    disabled={!accountData || isPriceLoading}
                     className="absolute right-2 top-2 h-8 px-3 text-xs font-semibold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200"
                   >
                     Max
@@ -257,7 +240,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
                 )}
                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                   <span>Min: 0.01 USDC</span>
-                  <span>Max: {accountData ? formatValue(accountData.availableBorrowsETH, true) : '0.00'} USDC</span>
+                  <span>Max: {accountData ? formatValue(accountData.availableBorrowsETH, true, ethUsdPrice) : '0.00'} USDC</span>
                 </div>
               </div>
             </div>
@@ -319,17 +302,17 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
                 variant="outline"
                 onClick={() => setIsOpen(false)}
                 className="flex-1 h-12 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200"
-                disabled={isPending || step === 'borrowing'}
+                disabled={isPending || isBorrowing}
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={isPending || step === 'borrowing' || !!validationError}
+                disabled={isPending || isBorrowing || !!validationError}
                 className="flex-1 h-12 bg-gradient-danger hover:bg-gradient-danger/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {step === 'borrowing' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {step === 'borrowing' ? 'Processing...' : 'Borrow Assets'}
+                {(isPending || isBorrowing) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isPending ? 'Check Wallet...' : isBorrowing ? 'Waiting...' : 'Borrow Assets'}
               </Button>
             </div>
           </DialogFooter>

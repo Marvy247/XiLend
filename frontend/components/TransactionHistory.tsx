@@ -3,64 +3,9 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
-
-interface Transaction {
-  id: string;
-  type: 'deposit' | 'borrow' | 'repay' | 'withdraw';
-  amount: number;
-  asset: string;
-  date: Date;
-  status: 'completed' | 'pending' | 'failed';
-}
-
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    type: 'deposit',
-    amount: 2.5,
-    asset: 'ETH',
-    date: new Date(Date.now() - 3600 * 1000 * 2),
-    status: 'completed',
-  },
-  {
-    id: '2',
-    type: 'borrow',
-    amount: 1.0,
-    asset: 'ETH',
-    date: new Date(Date.now() - 3600 * 1000 * 5),
-    status: 'completed',
-  },
-  {
-    id: '3',
-    type: 'repay',
-    amount: 0.5,
-    asset: 'ETH',
-    date: new Date(Date.now() - 3600 * 1000 * 10),
-    status: 'pending',
-  },
-  {
-    id: '4',
-    type: 'withdraw',
-    amount: 1.2,
-    asset: 'ETH',
-    date: new Date(Date.now() - 3600 * 1000 * 24),
-    status: 'failed',
-  },
-];
-
-const typeToLabel = {
-  deposit: { label: 'Deposit', color: 'green' },
-  borrow: { label: 'Borrow', color: 'red' },
-  repay: { label: 'Repay', color: 'blue' },
-  withdraw: { label: 'Withdraw', color: 'orange' },
-};
-
-const statusToLabel = {
-  completed: { label: 'Completed', color: 'green' },
-  pending: { label: 'Pending', color: 'yellow' },
-  failed: { label: 'Failed', color: 'red' },
-};
+import { Activity } from 'lucide-react';
+import { useTransactionHistory, Transaction } from '@/hooks/useTransactionHistory';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function formatDate(date: Date) {
   return date.toLocaleString(undefined, {
@@ -72,7 +17,32 @@ function formatDate(date: Date) {
   });
 }
 
+const typeToLabel = {
+  deposit: { label: 'Deposit', color: 'green' },
+  borrow: { label: 'Borrow', color: 'red' },
+  repay: { label: 'Repay', color: 'blue' },
+  withdraw: { label: 'Withdraw', color: 'orange' },
+};
+
 export function TransactionHistory() {
+  const { transactions, isLoading, error } = useTransactionHistory();
+
+  if (error) {
+    return (
+      <Card className="glass border-0 hover:shadow-xl transition-all duration-300 mt-16">
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Activity className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            <CardTitle>Transaction History & Activity Logs</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4 text-red-500">
+          Error loading transactions: {error.message}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="glass border-0 hover:shadow-xl transition-all duration-300 mt-16">
       <CardHeader>
@@ -89,28 +59,50 @@ export function TransactionHistory() {
                 <th className="p-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Type</th>
                 <th className="p-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
                 <th className="p-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                <th className="p-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                <th className="p-4 text-sm font-semibold text-gray-700 dark:text-gray-300">Transaction Hash</th>
               </tr>
             </thead>
             <tbody>
-              {mockTransactions.map((tx) => (
-                <tr key={tx.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-                  <td className="p-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    <Badge variant="outline" className={`border-${typeToLabel[tx.type].color}-500 text-${typeToLabel[tx.type].color}-600`}>
-                      {typeToLabel[tx.type].label}
-                    </Badge>
-                  </td>
-                  <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
-                    {tx.amount.toFixed(4)} {tx.asset}
-                  </td>
-                  <td className="p-4 text-sm text-gray-700 dark:text-gray-300">{formatDate(tx.date)}</td>
-                  <td className="p-4 text-sm">
-                    <Badge variant="outline" className={`border-${statusToLabel[tx.status].color}-500 text-${statusToLabel[tx.status].color}-600`}>
-                      {statusToLabel[tx.status].label}
-                    </Badge>
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="border-b border-gray-200 dark:border-gray-700">
+                    <td className="p-4"><Skeleton className="h-6 w-24" /></td>
+                    <td className="p-4"><Skeleton className="h-6 w-32" /></td>
+                    <td className="p-4"><Skeleton className="h-6 w-40" /></td>
+                    <td className="p-4"><Skeleton className="h-6 w-48" /></td>
+                  </tr>
+                ))
+              ) : transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-4 text-center text-gray-500 dark:text-gray-400">
+                    No transactions found.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                transactions.map((tx) => (
+                  <tr key={tx.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
+                    <td className="p-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                      <Badge variant="outline" className={`border-${typeToLabel[tx.type].color}-500 text-${typeToLabel[tx.type].color}-600`}>
+                        {typeToLabel[tx.type].label}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                      {tx.amount.toFixed(4)} {tx.asset}
+                    </td>
+                    <td className="p-4 text-sm text-gray-700 dark:text-gray-300">{formatDate(tx.date)}</td>
+                    <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
+                      <a 
+                        href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-500 hover:underline"
+                      >
+                        {tx.txHash.substring(0, 6)}...{tx.txHash.substring(tx.txHash.length - 4)}
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

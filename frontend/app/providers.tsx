@@ -22,7 +22,7 @@ const wagmiConfig = createConfig({
   chains: [sepolia],
   connectors,
   transports: {
-    [sepolia.id]: http(),
+    [sepolia.id]: http('https://eth-sepolia.g.alchemy.com/v2/H--HtDpZlgQ0zxKBt7zBC-DzXtxGRL0J'),
   },
 });
 

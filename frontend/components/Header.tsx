@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { DarkModeToggle } from '@/components/DarkModeToggle';
 import { Button } from '@/components/ui/button';
@@ -23,33 +24,24 @@ export function Header() {
     {
       name: 'Dashboard',
       icon: BarChart3,
-      href: '#dashboard',
+      href: '/',
+      external: false,
       description: 'View your lending positions'
     },
     {
-      name: 'Deposit',
-      icon: TrendingUp,
-      href: '#deposit',
-      description: 'Add collateral to earn interest'
-    },
-    {
-      name: 'Borrow',
-      icon: Zap,
-      href: '#borrow',
-      description: 'Borrow against your collateral'
+      name: 'Docs',
+      icon: HelpCircle,
+      href: 'https://docs.xilend.com', // Placeholder
+      external: true,
+      description: 'Read our documentation'
     },
     {
       name: 'Security',
       icon: Shield,
-      href: '#security',
+      href: 'https://docs.xilend.com/security', // Placeholder
+      external: true,
       description: 'Learn about our security measures'
     },
-    {
-      name: 'Help',
-      icon: HelpCircle,
-      href: '#help',
-      description: 'Get help and support'
-    }
   ];
 
   return (
@@ -57,7 +49,7 @@ export function Header() {
       <div className="container max-w-full flex h-16 items-center justify-between px-6 lg:px-8">
         {/* Logo and Brand */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600">
               <TrendingUp className="h-5 w-5 text-white" />
             </div>
@@ -69,24 +61,22 @@ export function Header() {
                 Decentralized Lending
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          {navigationItems.slice(0, 4).map((item) => (
+          {navigationItems.map((item) => (
             <Button
               key={item.name}
               variant="ghost"
               size="sm"
-              className="flex items-center space-x-2 hover:bg-accent/50 transition-colors"
-              onClick={() => {
-                const element = document.querySelector(item.href);
-                element?.scrollIntoView({ behavior: 'smooth' });
-              }}
+              asChild
             >
-              <item.icon className="h-4 w-4" />
-              <span>{item.name}</span>
+              <Link href={item.href} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined} className="flex items-center space-x-2 hover:bg-accent/50 transition-colors">
+                <item.icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
             </Button>
           ))}
         </nav>
@@ -123,21 +113,20 @@ export function Header() {
                       key={item.name}
                       variant="ghost"
                       className="justify-start h-auto p-4 hover:bg-accent/50 transition-colors"
-                      onClick={() => {
-                        const element = document.querySelector(item.href);
-                        element?.scrollIntoView({ behavior: 'smooth' });
-                        setIsMenuOpen(false);
-                      }}
+                      onClick={() => setIsMenuOpen(false)}
+                      asChild
                     >
-                      <div className="flex items-start space-x-3">
-                        <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />
-                        <div className="text-left">
-                          <div className="font-medium">{item.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {item.description}
+                      <Link href={item.href} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined}>
+                        <div className="flex items-start space-x-3">
+                          <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />
+                          <div className="text-left">
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {item.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </Button>
                   ))}
                 </nav>
@@ -151,9 +140,6 @@ export function Header() {
                     <a href="#" className="hover:text-foreground transition-colors">
                       Terms of Service
                     </a>
-                    <a href="#" className="hover:text-foreground transition-colors">
-                      Documentation
-                    </a>
                   </div>
                 </div>
               </div>
@@ -161,8 +147,6 @@ export function Header() {
           </Sheet>
         </div>
       </div>
-
-
     </header>
   );
 }

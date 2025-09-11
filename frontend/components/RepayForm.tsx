@@ -1,9 +1,11 @@
- 'use client';
+'use client';
 
-import { useState } from 'react';
-import { useWriteContract, useAccount } from 'wagmi';
+import { useState, useEffect } from 'react';
+import { useWriteContract, useAccount, useWaitForTransactionReceipt } from 'wagmi';
 import { useUserAccountData } from '@/hooks/useLendingPool';
+import { useEthUsdPrice } from '@/hooks/useEthUsdPrice';
 import { CONTRACT_ADDRESSES, LENDING_POOL_ABI, ERC20_ABI } from '@/lib/contracts';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,13 +21,68 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState('');
   const [asset, setAsset] = useState<string>(CONTRACT_ADDRESSES.MockUSDC);
-  const [step, setStep] = useState<'idle' | 'approving' | 'repaying' | 'success' | 'error'>('idle');
+  const [step, setStep] = useState<'idle' | 'approving' | 'approve-waiting' | 'repaying' | 'repay-waiting' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [validationError, setValidationError] = useState('');
 
   const { address } = useAccount();
-  const { accountData } = useUserAccountData();
-  const { writeContract, isPending } = useWriteContract();
+  const { accountData, refetch, queryKey } = useUserAccountData();
+  const { ethUsdPrice, isLoading: isPriceLoading } = useEthUsdPrice();
+  const queryClient = useQueryClient();
+
+  const { writeContract: approve, data: approveHash, error: approveError, isPending: isApproving } = useWriteContract();
+  const { isLoading: isApproveWaiting, isSuccess: isApproveSuccess } = useWaitForTransactionReceipt({ hash: approveHash });
+
+  const { writeContract: repay, data: repayHash, error: repayError, isPending: isRepaying } = useWriteContract();
+  const { isLoading: isRepayWaiting, isSuccess: isRepaySuccess } = useWaitForTransactionReceipt({ hash: repayHash });
+
+  useEffect(() => {
+    if (isApproveSuccess && step === 'approve-waiting') {
+      setStep('repaying');
+      repay({
+        address: CONTRACT_ADDRESSES.LendingPool,
+        abi: LENDING_POOL_ABI,
+        functionName: 'repay',
+        args: [asset as `0x${string}`, BigInt(amount) * BigInt(10 ** 6), address],
+      });
+    }
+  }, [isApproveSuccess, step]);
+
+  useEffect(() => {
+    if (isRepaySuccess && step === 'repay-waiting') {
+      setStep('success');
+      refetch();
+      queryClient.invalidateQueries({ queryKey });
+      setTimeout(() => {
+        setIsOpen(false);
+        resetForm();
+        onSuccess?.();
+      }, 2000);
+    }
+  }, [isRepaySuccess, step]);
+
+  useEffect(() => {
+    if (approveError) {
+      setStep('error');
+      setErrorMessage(approveError.message);
+    }
+    if (repayError) {
+      setStep('error');
+      setErrorMessage(repayError.message);
+    }
+  }, [approveError, repayError]);
+
+  useEffect(() => {
+    if (approveHash && step === 'approving') {
+      setStep('approve-waiting');
+    }
+  }, [approveHash, step]);
+
+  useEffect(() => {
+    if (repayHash && step === 'repaying') {
+      setStep('repay-waiting');
+    }
+  }, [repayHash, step]);
 
   const validateAmount = (value: string) => {
     const num = parseFloat(value);
@@ -45,10 +102,8 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
   };
 
   const handleSetMax = () => {
-    if (accountData) {
-      // Convert from ETH to USDC (assuming 1 ETH = 2000 USDC for simplicity)
-      // In a real app, you'd get the actual price from the PriceOracle
-      const maxAmount = Number(accountData.totalDebtETH) / 1e18 * 2000;
+    if (accountData && ethUsdPrice) {
+      const maxAmount = Number(accountData.totalDebtETH) / 1e18 * ethUsdPrice;
       setAmount(maxAmount.toFixed(2));
       setValidationError('');
     }
@@ -56,50 +111,16 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!amount || !address) return;
-
-    const validation = validateAmount(amount);
-    if (validation) {
-      setValidationError(validation);
-      return;
-    }
-
+    if (!amount || !address || !!validateAmount(amount)) return;
     setStep('approving');
     setErrorMessage('');
     setValidationError('');
-
-    try {
-      // Approve lending pool to spend tokens
-      await writeContract({
-        address: asset as `0x${string}`,
-        abi: ERC20_ABI,
-        functionName: 'approve',
-        args: [CONTRACT_ADDRESSES.LendingPool, BigInt(amount) * BigInt(10 ** 6)],
-      });
-
-      setStep('repaying');
-
-      // Repay
-      await writeContract({
-        address: CONTRACT_ADDRESSES.LendingPool,
-        abi: LENDING_POOL_ABI,
-        functionName: 'repay',
-        args: [asset as `0x${string}`, BigInt(amount) * BigInt(10 ** 6), address],
-      });
-
-      setStep('success');
-      setTimeout(() => {
-        setIsOpen(false);
-        setAmount('');
-        setStep('idle');
-        onSuccess?.();
-      }, 2000);
-    } catch (error: any) {
-      console.error('Repay failed:', error);
-      setStep('error');
-      setErrorMessage(error?.message || 'Repay transaction failed. Please try again.');
-    }
+    approve({
+      address: asset as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [CONTRACT_ADDRESSES.LendingPool, BigInt(amount) * BigInt(10 ** 6)],
+    });
   };
 
   const resetForm = () => {
@@ -109,7 +130,10 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
     setAmount('');
   };
 
+  const isPending = isApproving || isApproveWaiting || isRepaying || isRepayWaiting;
+
   const handleOpenChange = (open: boolean) => {
+    if (isPending) return;
     setIsOpen(open);
     if (!open) {
       resetForm();
@@ -146,7 +170,13 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
             <div>
               <DialogTitle className="text-xl">Repay Loan</DialogTitle>
               <DialogDescription className="text-gray-600 dark:text-gray-400">
-                Repay your borrowed assets to reduce your debt.
+                {step === 'approving' && 'Please approve the token spend in your wallet.'}
+                {step === 'approve-waiting' && 'Waiting for approval confirmation...'}
+                {step === 'repaying' && 'Please confirm the repayment in your wallet.'}
+                {step === 'repay-waiting' && 'Waiting for repayment confirmation...'}
+                {step === 'success' && 'Repayment successful!'}
+                {step === 'error' && (errorMessage || 'An error occurred.')}
+                {step === 'idle' && 'Repay your borrowed assets to reduce your debt.'}
               </DialogDescription>
             </div>
           </div>
@@ -154,77 +184,50 @@ export function RepayForm({ onSuccess }: RepayFormProps) {
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="asset" className="text-right">
-                Asset
-              </Label>
-              <Select value={asset} onValueChange={setAsset}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={CONTRACT_ADDRESSES.MockUSDC}>USDC</SelectItem>
-                  {/* <SelectItem value={CONTRACT_ADDRESSES.MockXFI}>XFI</SelectItem> */}
-                </SelectContent>
+              <Label htmlFor="asset" className="text-right">Asset</Label>
+              <Select value={asset} onValueChange={setAsset} disabled={isPending}>
+                <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
+                <SelectContent><SelectItem value={CONTRACT_ADDRESSES.MockUSDC}>USDC</SelectItem></SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right flex items-center">
-                <DollarSign className="h-4 w-4 mr-1" />
-                Amount
-              </Label>
+              <Label htmlFor="amount" className="text-right flex items-center"><DollarSign className="h-4 w-4 mr-1" />Amount</Label>
               <div className="col-span-3 flex space-x-2">
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  placeholder="0.00"
-                  className={`flex-1 transition-all duration-200 ${validationError ? 'border-red-500 focus:border-red-500' : 'focus:border-green-500'}`}
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSetMax}
-                  disabled={!accountData}
-                  className="px-3 py-2 text-xs"
-                >
-                  Max
-                </Button>
-                {validationError && (
-                  <p className="text-red-500 text-sm mt-1 flex items-center col-span-2">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    {validationError}
-                  </p>
-                )}
+                <Input id="amount" type="number" step="0.01" value={amount} onChange={handleAmountChange} placeholder="0.00" className={`flex-1 transition-all duration-200 ${validationError ? 'border-red-500 focus:border-red-500' : 'focus:border-green-500'}`} required disabled={isPending} />
+                <Button type="button" variant="outline" size="sm" onClick={handleSetMax} disabled={!accountData || isPriceLoading} className="px-3 py-2 text-xs">Max</Button>
+                {validationError && <p className="text-red-500 text-sm mt-1 flex items-center col-span-2"><AlertCircle className="h-3 w-3 mr-1" />{validationError}</p>}
               </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-col space-y-4 pt-6 border-t border-gray-100 dark:border-gray-700">
             {step === 'error' && (
-              <p className="text-red-600 mb-2">{errorMessage}</p>
+              <div className="w-full p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-fade-in">
+                <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
+                  <AlertCircle className="h-5 w-5" />
+                  <span className="font-medium">{errorMessage}</span>
+                </div>
+              </div>
             )}
             {step === 'success' && (
-              <p className="text-green-600 mb-2 flex items-center">
-                <CheckCircle className="mr-1" /> Repay successful!
-              </p>
+              <div className="w-full p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg animate-scale-in">
+                <div className="flex items-center space-x-2 text-green-600 dark:text-green-400">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Repay transaction successful!</span>
+                </div>
+              </div>
             )}
-            {step === 'approving' && (
-              <p className="text-blue-600 mb-2 flex items-center">
-                <Loader2 className="mr-1 animate-spin" /> Approving tokens...
-              </p>
-            )}
-            {step === 'repaying' && (
-              <p className="text-blue-600 mb-2 flex items-center">
-                <Loader2 className="mr-1 animate-spin" /> Processing repayment...
-              </p>
-            )}
-            <Button type="submit" disabled={isPending || step === 'approving' || step === 'repaying'}>
-              {(step === 'approving' || step === 'repaying') && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Repay
-            </Button>
+            <div className="flex space-x-3 w-full">
+              <Button type="button" variant="outline" onClick={() => setIsOpen(false)} className="flex-1 h-12 border-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200" disabled={isPending}>Cancel</Button>
+              <Button type="submit" disabled={isPending || !!validationError} className="flex-1 h-12 bg-gradient-success hover:bg-gradient-success/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {step === 'approving' && 'Check Wallet...'}
+                {step === 'approve-waiting' && 'Approving...'}
+                {step === 'repaying' && 'Check Wallet...'}
+                {step === 'repay-waiting' && 'Repaying...'}
+                {step === 'idle' && 'Repay'}
+                {step === 'error' && 'Try Again'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

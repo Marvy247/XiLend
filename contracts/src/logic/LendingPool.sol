@@ -17,6 +17,11 @@ import "./InterestRateModel.sol";
 contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
     constructor() Ownable(msg.sender) {}
 
+    event Deposit(address indexed reserve, address indexed user, address indexed onBehalfOf, uint256 amount, uint16 referralCode);
+    event Withdraw(address indexed reserve, address indexed user, uint256 amount);
+    event Borrow(address indexed reserve, address indexed user, address indexed onBehalfOf, uint256 amount, uint256 interestRateMode, uint256 borrowRate, uint16 referralCode);
+    event Repay(address indexed reserve, address indexed user, address indexed repayer, uint256 amount);
+
     InterestRateModel public interestRateModel;
 
     function setInterestRateModel(address _interestRateModel) external onlyOwner {
@@ -67,6 +72,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         if (useAsCollateral) {
             collateralManager.depositCollateral(onBehalfOf, asset, amount);
         }
+
+        emit Deposit(asset, msg.sender, onBehalfOf, amount, 0);
     }
 
     function withdraw(address asset, uint256 amount, address to) external override nonReentrant returns (uint256) {
@@ -76,6 +83,8 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
             collateralManager.withdrawCollateral(msg.sender, asset, amount);
         }
         IERC20(asset).transfer(to, amount);
+
+        emit Withdraw(asset, msg.sender, amount);
         return amount;
     }
 
@@ -112,6 +121,9 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         userBorrows[onBehalfOf][asset] += amount;
         userTotalBorrowedValue[onBehalfOf] += borrowValue;
         totalBorrows[asset] += amount;
+
+        // 8. Emit event
+        emit Borrow(asset, onBehalfOf, onBehalfOf, amount, interestRateMode, 0, 0);
     }
 
     function repay(address asset, uint256 amount, address onBehalfOf) external override returns (uint256) {
@@ -127,6 +139,7 @@ contract LendingPool is ILendingPool, Ownable, ReentrancyGuard {
         totalBorrows[asset] -= amount;
         userBorrows[onBehalfOf][asset] -= amount;
 
+        emit Repay(asset, onBehalfOf, msg.sender, amount);
         return amount;
     }
 

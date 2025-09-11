@@ -20,7 +20,7 @@ export function useReminders() {
       try {
         const parsed = JSON.parse(stored);
         // Convert date strings back to Date objects
-        const remindersWithDates = parsed.map((r: any) => ({
+        const remindersWithDates = parsed.map((r: Reminder) => ({
           ...r,
           date: new Date(r.date)
         }));
