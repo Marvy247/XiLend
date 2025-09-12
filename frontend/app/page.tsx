@@ -185,7 +185,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="text-4xl font-bold text-gray-900 dark:text-white mb-2 group-hover:scale-105 transition-transform duration-300">
-                      {collateralVisible ? (accountData ? formatValue(accountData.totalCollateralETH, true, ethUsdPrice) : '0.00') : '****'} <span className="text-lg font-medium text-gray-600 dark:text-gray-400">USDC</span>
+                      {collateralVisible ? (accountData ? formatValue(accountData.totalCollateralETH, true, ethUsdPrice) : '0.00') : '****'} <span className="text-lg font-medium text-gray-600 dark:text-gray-400">ETH</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Your deposited assets</p>
                     <div className="mt-3 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
