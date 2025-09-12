@@ -91,14 +91,18 @@ export function TransactionHistory() {
                     </td>
                     <td className="p-4 text-sm text-gray-700 dark:text-gray-300">{formatDate(tx.date)}</td>
                     <td className="p-4 text-sm text-gray-700 dark:text-gray-300">
-                      <a 
-                        href={`https://sepolia.etherscan.io/tx/${tx.txHash}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-blue-500 hover:underline"
-                      >
-                        {tx.txHash.substring(0, 6)}...{tx.txHash.substring(tx.txHash.length - 4)}
-                      </a>
+                      {tx.txHash ? (
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${tx.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          {tx.txHash.substring(0, 6)}...{tx.txHash.substring(tx.txHash.length - 4)}
+                        </a>
+                      ) : (
+                        'N/A'
+                      )}
                     </td>
                   </tr>
                 ))
