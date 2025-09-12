@@ -119,20 +119,20 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <div className="group p-6 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-red-300 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:bg-gradient-to-br hover:from-red-50 hover:to-pink-50 dark:hover:from-gray-700 dark:hover:to-gray-600 relative overflow-hidden glass-card hover-lift">
+      <div className="group p-6 border border-gray-200 dark:border-gray-700 rounded-xl hover:border-red-300 dark:hover:border-red-600 hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800 hover:bg-gradient-to-br hover:from-red-50 hover:to-pink-50 dark:hover:from-gray-700 dark:hover:to-gray-600 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-red-400/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-3 rounded-full bg-gradient-danger group-hover:scale-110 transition-transform duration-300 shadow-lg animate-glow">
-              <TrendingDown className="h-6 w-6 text-white" />
+            <div className="rounded-full bg-gradient-danger group-hover:scale-110">
+              <TrendingDown className="h-6 w-6 text-foreground" />
             </div>
             <div className="text-left">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors duration-300">Borrow Assets</h3>
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white group-hover:text-white dark:group-hover:text-white transition-colors duration-300">Borrow Assets</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Borrow against your collateral</p>
             </div>
           </div>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-danger hover:bg-gradient-danger/90 text-white font-semibold px-6 py-2 rounded-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 focus-ring">
+            <Button className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-medium px-3 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
               Borrow
             </Button>
           </DialogTrigger>
@@ -150,7 +150,7 @@ export function BorrowForm({ onSuccess }: BorrowFormProps) {
         <DialogHeader className="pb-6">
           <div className="flex items-center space-x-3 mb-4">
             <div className="p-3 rounded-full bg-gradient-danger shadow-lg">
-              <TrendingDown className="h-6 w-6 text-white" />
+              <TrendingDown className="h-6 w-6 text-foreground" />
             </div>
             <div>
               <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent">

@@ -40,7 +40,7 @@ function DashboardCardSkeleton() {
 }
 
 export default function Dashboard() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting, isReconnecting } = useAccount();
   const { accountData, isLoading: isAccountDataLoading, refetch, error: accountError } = useUserAccountData();
   const { reminders, addReminder, removeReminder } = useReminders();
   const healthFactorWarning = useHealthFactorWarning();
@@ -90,6 +90,26 @@ export default function Dashboard() {
     return 'Healthy';
   };
 
+  const getHealthFactorBarClasses = (hf: number) => {
+    if (hf < 1.0) {
+      return 'bg-gradient-to-r from-red-400 to-red-600 opacity-80 group-hover:opacity-100';
+    }
+    if (hf < 1.5) {
+      return 'bg-gradient-to-r from-yellow-400 to-orange-500 opacity-60 group-hover:opacity-100';
+    }
+    return 'bg-gradient-to-r from-green-400 to-green-600 opacity-60 group-hover:opacity-100';
+  };
+
+  const getHealthFactorHoverBg = (hf: number) => {
+    if (hf < 1.0) {
+      return 'bg-gradient-to-br from-red-400/20 to-red-500/20';
+    }
+    if (hf < 1.5) {
+      return 'bg-gradient-to-br from-yellow-400/20 to-orange-500/20';
+    }
+    return 'bg-gradient-to-br from-green-400/20 to-green-500/20';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-blue-900 dark:to-indigo-900 transition-all duration-500 flex flex-col">
       <Header />
@@ -105,11 +125,25 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {!isConnected ? (
+        {isConnecting || isReconnecting ? (
+          <Card className="text-center p-12 glass animate-fade-in hover:shadow-xl transition-all duration-300 border-0">
+            <CardContent>
+              <div className="p-6 rounded-full bg-gradient-secondary inline-block mb-8 animate-spin">
+                <Wallet className="h-20 w-20 text-foreground" />
+              </div>
+              <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Connecting Wallet
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-8 text-xl">
+                Please wait while we connect to your wallet...
+              </p>
+            </CardContent>
+          </Card>
+        ) : !isConnected ? (
           <Card className="text-center p-12 glass animate-fade-in hover:shadow-xl transition-all duration-300 border-0">
             <CardContent>
               <div className="p-6 rounded-full bg-gradient-secondary inline-block mb-8 animate-bounce-custom">
-                <Wallet className="h-20 w-20 text-white" />
+                <Wallet className="h-20 w-20 text-foreground" />
               </div>
               <h2 className="text-4xl font-bold mb-6 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                 Connect Your Wallet
@@ -155,10 +189,10 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 animate-fade-in">
                 <Card className="glass-card hover-lift transition-all duration-300 border-0 overflow-hidden relative group p-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-400/20 to-blue-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
                   <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-4 relative">
                     <div className="p-3 rounded-full bg-gradient-success shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <TrendingUp className="h-5 w-5 text-white" />
+                      <TrendingUp className="h-5 w-5 text-foreground" />
                     </div>
                     <CardTitle className="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">Total Collateral</CardTitle>
                     <div className="absolute top-2 right-2 flex space-x-1">
@@ -188,15 +222,15 @@ export default function Dashboard() {
                       {collateralVisible ? (accountData ? formatValue(accountData.totalCollateralETH, true, ethUsdPrice) : '0.00') : '****'} <span className="text-lg font-medium text-gray-600 dark:text-gray-400">ETH</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Your deposited assets</p>
-                    <div className="mt-3 h-1 bg-gradient-to-r from-green-400 to-blue-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="mt-3 h-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card hover-lift transition-all duration-300 border-0 overflow-hidden relative group p-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-400/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-400/10 to-rose-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
                   <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-4 relative">
                     <div className="p-3 rounded-full bg-gradient-danger shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <TrendingDown className="h-5 w-5 text-white" />
+                      <TrendingDown className="h-5 w-5 text-foreground" />
                     </div>
                     <CardTitle className="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">Total Debt</CardTitle>
                     <button
@@ -213,15 +247,15 @@ export default function Dashboard() {
                       {debtVisible ? (accountData ? formatValue(accountData.totalDebtETH, true, ethUsdPrice) : '0.00') : '****'} <span className="text-lg font-medium text-gray-600 dark:text-gray-400">USDC</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Outstanding loans</p>
-                    <div className="mt-3 h-1 bg-gradient-to-r from-red-400 to-pink-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="mt-3 h-1 bg-gradient-to-r from-red-400 to-rose-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card hover-lift transition-all duration-300 border-0 overflow-hidden relative group p-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
                   <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-4 relative">
                     <div className="p-3 rounded-full bg-gradient-primary shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <Wallet className="h-5 w-5 text-white" />
+                      <Wallet className="h-5 w-5 text-foreground" />
                     </div>
                     <CardTitle className="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">Available Borrow</CardTitle>
                     <button
@@ -238,15 +272,15 @@ export default function Dashboard() {
                       {borrowVisible ? (accountData ? formatValue(accountData.availableBorrowsETH, true, ethUsdPrice) : '0.00') : '****'} <span className="text-lg font-medium text-gray-600 dark:text-gray-400">USDC</span>
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">Borrowing power</p>
-                    <div className="mt-3 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="mt-3 h-1 bg-gradient-to-r from-blue-400 to-sky-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </CardContent>
                 </Card>
 
                 <Card className="glass-card hover-lift transition-all duration-300 border-0 overflow-hidden relative group p-6">
-                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
+                  <div className={`absolute inset-0 ${accountData ? getHealthFactorHoverBg(Number(accountData.healthFactor) / 1e18) : 'bg-gradient-to-br from-yellow-400/20 to-orange-500/20'} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl`}></div>
                   <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-4 relative">
                     <div className={`p-3 rounded-full bg-gradient-warning shadow-lg group-hover:scale-110 transition-transform duration-300 ${accountData && healthVisible && Number(accountData.healthFactor) / 1e18 < 1.0 ? 'animate-pulse' : ''}`}>
-                      <AlertTriangle className="h-5 w-5 text-white" />
+                      <AlertTriangle className="h-5 w-5 text-foreground" />
                     </div>
                     <CardTitle className="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">Health Factor</CardTitle>
                     <button
@@ -273,7 +307,7 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
                       {accountData && healthVisible && Number(accountData.healthFactor) / 1e18 < 1.0 ? '⚠️ High liquidation risk!' : 'Liquidation risk'}
                     </p>
-                    <div className={`mt-3 h-1 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full opacity-60 group-hover:opacity-100 transition-opacity duration-300 ${accountData && healthVisible && Number(accountData.healthFactor) / 1e18 < 1.0 ? 'animate-pulse' : ''}`}></div>
+                    <div className={`mt-3 h-1 rounded-full transition-opacity duration-300 ${accountData && healthVisible ? getHealthFactorBarClasses(Number(accountData.healthFactor) / 1e18) : 'bg-gradient-to-r from-yellow-400 to-orange-500 opacity-60 group-hover:opacity-100'} ${accountData && healthVisible && Number(accountData.healthFactor) / 1e18 < 1.0 ? 'animate-pulse' : ''}`}></div>
                   </CardContent>
                 </Card>
               </div>

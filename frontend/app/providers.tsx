@@ -5,7 +5,7 @@ import {
   RainbowKitProvider,
   getDefaultWallets,
 } from '@rainbow-me/rainbowkit';
-import { createConfig, WagmiProvider, createStorage } from 'wagmi';
+import { createConfig, WagmiProvider } from 'wagmi';
 import { walletConnect, injected } from 'wagmi/connectors';
 import { http } from 'viem';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -25,10 +25,6 @@ const wagmiConfig = createConfig({
     [sepolia.id]: http('https://eth-sepolia.g.alchemy.com/v2/H--HtDpZlgQ0zxKBt7zBC-DzXtxGRL0J'),
   },
   ssr: true,
-  storage: createStorage({
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    key: 'wagmi.wallet',
-  }),
 });
 
 const queryClient = new QueryClient();

@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Loader2, Minus, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
+import { Loader2, ArrowDown, AlertCircle, CheckCircle, DollarSign } from 'lucide-react';
 
 interface WithdrawFormProps {
   onSuccess?: () => void;
@@ -74,8 +74,9 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
 
   const handleSetMax = () => {
     if (accountData && ethUsdPrice) {
-      const maxAmount = Number(accountData.totalCollateralETH) / 1e18 * ethUsdPrice;
-      setAmount(maxAmount.toFixed(2));
+      const availableCollateral = Number(accountData.totalCollateralETH) - Number(accountData.totalDebtETH);
+      const maxAmount = availableCollateral / 1e18 * ethUsdPrice;
+      setAmount(Math.max(0, maxAmount).toFixed(2));
       setErrors({});
     }
   };
@@ -95,8 +96,8 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
         <div className="absolute inset-0 bg-gradient-to-br from-red-400/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
         <div className="relative z-10 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-3 rounded-full bg-gradient-to-r from-red-500 to-pink-500 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-              <Minus className="h-6 w-6 text-white" />
+            <div>
+              <ArrowDown className="h-6 w-6 text-foreground" />
             </div>
             <div className="text-left">
               <h3 className="font-semibold text-lg text-gray-900 dark:text-white">Withdraw Collateral</h3>

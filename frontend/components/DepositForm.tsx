@@ -133,7 +133,7 @@ export function DepositForm({ onSuccess }: DepositFormProps) {
             </div>
           </div>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-primary hover:bg-gradient-primary/90 text-gray-900 dark:text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+            <Button className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-medium px-3 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
               Deposit
             </Button>
           </DialogTrigger>

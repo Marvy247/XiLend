@@ -76,7 +76,7 @@ export function Footer() {
                     rel={'external' in link && link.external ? 'noopener noreferrer' : undefined}
                     aria-label={link.name}
                   >
-                    <link.icon className="h-4 w-4" />
+                    <link.icon className="h-4 w-4 text-foreground" />
                   </a>
                 </Button>
               ))}
@@ -123,7 +123,7 @@ export function Footer() {
                       target={'external' in link && link.external ? '_blank' : undefined}
                       rel={'external' in link && link.external ? 'noopener noreferrer' : undefined}
                     >
-                      <link.icon className="h-3 w-3" />
+                      <link.icon className="h-3 w-3 text-foreground" />
                       <span>{link.name}</span>
                     </a>
                   </Button>
@@ -170,7 +170,7 @@ export function Footer() {
 
           <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <span className="flex items-center space-x-1">
-              <Shield className="h-3 w-3" />
+              <Shield className="h-3 w-3 text-foreground" />
               <span>Audited</span>
             </span>
             <span>•</span>

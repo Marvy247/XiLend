@@ -79,7 +79,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
             className="absolute top-0 right-0 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             aria-label="Skip onboarding"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 text-foreground" />
           </button>
 
           {/* Progress indicator */}
@@ -123,7 +123,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                 currentStep === 0 ? 'opacity-50 cursor-not-allowed' : 'opacity-100'
               }`}
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-4 w-4 text-foreground" />
               <span>Previous</span>
             </Button>
 
@@ -136,7 +136,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
               className="flex items-center text-gray-300 hover:text-gray-900 space-x-2 bg-gradient-primary hover:opacity-90"
             >
               <span>{currentStep === onboardingSteps.length - 1 ? 'Get Started' : 'Next'}</span>
-              {currentStep < onboardingSteps.length - 1 && <ChevronRight className="h-4 w-4" />}
+              <ChevronRight className="h-4 w-4 text-foreground" />
             </Button>
           </div>
 

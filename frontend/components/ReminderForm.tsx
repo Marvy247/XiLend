@@ -49,7 +49,7 @@ export function ReminderForm({ onAddReminder }: ReminderFormProps) {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="w-full">
-          <Clock className="h-4 w-4 mr-2" />
+          <Clock className="h-4 w-4 mr-2 text-foreground" />
           Set Reminder
         </Button>
       </DialogTrigger>

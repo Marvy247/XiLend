@@ -87,7 +87,7 @@ export function NotificationAlert({
               className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Dismiss alert"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-foreground" />
             </button>
           </div>
           <div className="mt-4">

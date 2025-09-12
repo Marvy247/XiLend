@@ -74,7 +74,7 @@ export function Header() {
               asChild
             >
               <Link href={item.href} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined} className="flex items-center space-x-2 hover:bg-accent/50 transition-colors">
-                <item.icon className="h-4 w-4" />
+                <item.icon className="h-4 w-4 text-foreground" />
                 <span>{item.name}</span>
               </Link>
             </Button>
@@ -118,7 +118,7 @@ export function Header() {
                     >
                       <Link href={item.href} target={item.external ? '_blank' : undefined} rel={item.external ? 'noopener noreferrer' : undefined}>
                         <div className="flex items-start space-x-3">
-                          <item.icon className="h-5 w-5 mt-0.5 text-muted-foreground" />
+                          <item.icon className="h-5 w-5 mt-0.5 text-foreground" />
                           <div className="text-left">
                             <div className="font-medium">{item.name}</div>
                             <div className="text-sm text-muted-foreground">

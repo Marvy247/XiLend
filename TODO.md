@@ -1,4 +1,7 @@
-- [x] Run cd frontend && npm run build to identify errors
-- [x] Analyze build errors
-- [x] Fix identified errors by editing relevant files
-- [x] Re-run npm run build to confirm fixes
+- [x] Fix icons that are white in light mode by adding text-foreground to icons without explicit color classes
+- [x] Update DarkModeToggle icons to have text-foreground
+- [x] Update Header navigation icons to have text-foreground
+- [x] Update Footer icons to have text-foreground
+- [x] Update OnboardingModal close button icon to have text-foreground
+- [x] Update NotificationAlert close button icon to have text-foreground
+- [x] Test the changes in light mode
