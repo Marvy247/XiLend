@@ -104,7 +104,7 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             </div>
           </div>
           <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-medium px-6 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
+            <Button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-medium px-3 py-2 rounded-lg shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300">
               Withdraw
             </Button>
           </DialogTrigger>
