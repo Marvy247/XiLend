@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useWriteContract, useAccount, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useAccount, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { useUserAccountData } from '@/hooks/useLendingPool';
 import { useEthUsdPrice } from '@/hooks/useEthUsdPrice';
-import { CONTRACT_ADDRESSES, LENDING_POOL_ABI } from '@/lib/contracts';
+import { CONTRACT_ADDRESSES, LENDING_POOL_ABI, COLLATERAL_MANAGER_ABI } from '@/lib/contracts';
+import { Address } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +20,7 @@ interface WithdrawFormProps {
 export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState('');
-  const [asset, setAsset] = useState<string>(CONTRACT_ADDRESSES.MockUSDC);
+  const [asset, setAsset] = useState<Address>(CONTRACT_ADDRESSES.MockUSDC);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [step, setStep] = useState<'form' | 'withdrawing' | 'waiting' | 'success' | 'error'>('form');
 
@@ -27,6 +28,13 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   const { accountData, refetch } = useUserAccountData();
   const { writeContract, data: withdrawHash, error: withdrawError, isPending } = useWriteContract();
   const { ethUsdPrice, isLoading: isPriceLoading } = useEthUsdPrice();
+
+  const { data: userCollateral } = useReadContract({
+    address: CONTRACT_ADDRESSES.CollateralManager,
+    abi: COLLATERAL_MANAGER_ABI,
+    functionName: 'userCollateral',
+    args: address && asset ? [address, asset] : undefined,
+  });
 
   const { isLoading: isWithdrawing, isSuccess: isWithdrawSuccess } = useWaitForTransactionReceipt({
     hash: withdrawHash,
@@ -73,9 +81,8 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
   };
 
   const handleSetMax = () => {
-    if (accountData && ethUsdPrice) {
-      const availableCollateral = Number(accountData.totalCollateralETH) - Number(accountData.totalDebtETH);
-      const maxAmount = availableCollateral / 1e18 * ethUsdPrice;
+    if (userCollateral) {
+      const maxAmount = Number(userCollateral) / 1e6; // USDC has 6 decimals
       setAmount(Math.max(0, maxAmount).toFixed(2));
       setErrors({});
     }
@@ -133,7 +140,7 @@ export function WithdrawForm({ onSuccess }: WithdrawFormProps) {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="asset" className="text-right">Asset</Label>
-                <Select value={asset} onValueChange={setAsset} disabled={isPending || isWithdrawing}>
+                  <Select value={asset} onValueChange={(value) => setAsset(value as Address)} disabled={isPending || isWithdrawing}>
                   <SelectTrigger className="col-span-3"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value={CONTRACT_ADDRESSES.MockUSDC}>USDC</SelectItem></SelectContent>
                 </Select>

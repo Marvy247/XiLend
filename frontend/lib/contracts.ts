@@ -130,6 +130,20 @@ export const PRICE_ORACLE_ABI = [
   },
 ] as const;
 
+// CollateralManager ABI
+export const COLLATERAL_MANAGER_ABI = [
+  {
+    inputs: [
+      { name: 'user', type: 'address' },
+      { name: 'asset', type: 'address' },
+    ],
+    name: 'userCollateral',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
+
 // ERC20 ABI for token interactions
 export const ERC20_ABI = [
   {

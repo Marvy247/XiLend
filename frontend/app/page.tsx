@@ -192,7 +192,7 @@ export default function Dashboard() {
                   <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-xl"></div>
                   <CardHeader className="flex flex-row items-center space-x-4 space-y-0 pb-4 relative">
                     <div className="p-3 rounded-full bg-gradient-success shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <TrendingUp className="h-5 w-5 text-foreground" />
+                      <TrendingUp className="h-5 w-5 text-white" />
                     </div>
                     <CardTitle className="text-base font-semibold text-gray-800 dark:text-gray-200 flex-1">Total Collateral</CardTitle>
                     <div className="absolute top-2 right-2 flex space-x-1">
